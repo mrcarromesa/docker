@@ -1,0 +1,11 @@
+# executar:
+# docker build -t carromesa/nginx:prod . -f Dockerfile.prod
+FROM nginx:1.15.0-alpine
+
+# Removemos o arquivo padrão do nginx
+RUN rm /etc/nginx/conf.d/default.conf
+# enviamos o nosso arquivo, pois quando o nginx executar ele irá procurar por todos os arquivos .conf
+COPY nginx.conf /etc/nginx/conf.d
+
+# O nginx precisa de um arquivo .php para não dar erro 404, pois o index.php precisa existir para dar continuidade na chamada!
+RUN mkdir /var/www/html -p && touch /var/www/html/index.php

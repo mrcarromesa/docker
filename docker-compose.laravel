@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  # Cada serviço é um container que iremos trabalhar
+  # o nome dos serviços decidimos qual será
+
+  ####
+  #### As imagens já deverão estar no docker hub, ou ter sido criada anteriormente!
+  ####
+  laravel:
+    # build com o context para gerar a partir de um Dockerfile
+    build:
+      context: ./laravel
+      dockerfile: Dockerfile.prod
+    image: carromesa/laravel:prod
+    container_name: laravel
+    networks: 
+      - laranet
+
+  nginx:
+    # build com o context para gerar a partir de um Dockerfile
+    build: 
+      context: ./laravel/nginx
+      dockerfile: Dockerfile.prod
+    image: carromesa/nginx:prod
+    container_name: nginx
+    networks: 
+      - laranet
+    ports: 
+      - "8080:80"
+
+# Precisamos realizar a "criação da rede":
+networks: 
+  laranet:
+    driver: bridge

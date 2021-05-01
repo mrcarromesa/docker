@@ -1,0 +1,38 @@
+# executar: docker build -t carromesa/laravel:prod . -f Dockerfile.prod
+FROM php:7.4-cli AS builder
+
+WORKDIR /var/www
+
+RUN apt-get update && \
+    apt-get install libzip-dev -y && \
+    docker-php-ext-install zip
+
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
+    php composer-setup.php && \
+    php -r "unlink('composer-setup.php');"
+
+RUN php composer.phar create-project --prefer-dist laravel/laravel laravel
+
+# Vamos copiar o conteudo do build anterior para uma imagem mais leve abaixo
+
+FROM php:7.4-fpm-alpine
+WORKDIR /var/www
+RUN rm -rf /var/www/html
+COPY --from=builder /var/www/laravel .
+
+# Adicionamos um link simbolico, ou no caso uma pasta "atalho" para verificar se foi criado utilizamos o comando ls -la
+# ou seja quando o usuário acessar a pasta html ele estará vendo o conteúdo da pasta public
+RUN ln -s public html
+# dar permissão para gravar na pasta /var/www
+
+RUN chown -R www-data:www-data /var/www
+# chown = troca o grupo
+# -R = recursivo
+# www-data: = permissão para nosso grupo
+# :www-data = permissão para nosso usuário
+
+# Dessa forma trocamos o dono do grupo
+
+EXPOSE 9000
+CMD ["php-fpm"]
+

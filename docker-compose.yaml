@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+
+  # Configuracao do node
+  # Acessar via bash: docker exec -it app bash
+  app:
+    build:
+      context: node # é o nome da pasta... ./node onde conterá o Dockerfile
+    container_name: app
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s docker-entrypoint.sh # Esse entrypoint é padrão dessa imagem do docker, cada imagem pode ter seu próprio entrypointa
+    networks: 
+      - node-network
+    volumes:
+      - ./node:/usr/share/app
+    tty: true
+
+    # Importante!!!!!!! Adicionar ports
+    ports:
+      - "3000:3000" # Ou seja na porta 3000 do meu computador aponta para porta 3000 do meu container
+    depends_on: 
+      - db # <---- o db precisa ficar de pé primeiro
+  # Configuracao do db
+  db:
+    image: mysql:5.7 # imagem do mysql que iremos utilizar
+    command: --innodb-use-native-aio=0 # comando necessário especificamente para o mysql quando inicia o container
+    container_name: db
+    restart: always # Se por algum motivo o container cair ele será restartado
+    tty: true # caso eu precise acessar o terminal do container habilito isso
+    volumes:
+      - ./mysql:/var/lib/mysql # Caso o volume seja removido ao restartar ele irá obter os dados dessa pasta
+
+    # variaveis de ambiente - Nesse caso já estamos informando o nome da base, password e user que é utilizado para criar o container do mysql
+    environment: 
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+      # - MYSQL_USER=root - Não precisa mais nas versões recentes dessa imagem
+    networks:
+      - node-network
+
+networks:
+  node-network:
+    driver: bridge
